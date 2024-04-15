@@ -1,0 +1,507 @@
+definitions:
+  domain.Message:
+    properties:
+      id:
+        type: string
+      topicID:
+        type: string
+      userFilePath:
+        type: string
+      userID:
+        type: string
+      userMessage:
+        type: string
+      whenCreated:
+        type: string
+      whenDeleted:
+        type: string
+      whenUpdated:
+        type: string
+    type: object
+  domain.Topic:
+    properties:
+      id:
+        type: string
+      topicFile:
+        type: string
+      topicInfo:
+        type: string
+      topicName:
+        type: string
+      whenCreated:
+        type: string
+      whenDeleted:
+        type: string
+      whenUpdate:
+        type: string
+    type: object
+  models.Error:
+    properties:
+      code:
+        type: integer
+      error:
+        type: string
+    type: object
+  models.RespMessage:
+    properties:
+      dizLike:
+        type: integer
+      like:
+        type: integer
+      message:
+        type: string
+      messageID:
+        type: string
+      pathToFiles:
+        items:
+          type: string
+        type: array
+      userID:
+        type: string
+      userLogin:
+        type: string
+      whenCreated:
+        type: string
+      whenUpdate:
+        type: string
+    type: object
+  models.TopicRating:
+    properties:
+      topic:
+        $ref: '#/definitions/domain.Topic'
+      users:
+        type: integer
+    type: object
+  models.User:
+    properties:
+      user_id:
+        type: string
+      user_name:
+        type: string
+    type: object
+host: localhost:8800
+info:
+  contact:
+    email: tima.gorenskiy@mail.ru
+    url: https://t.me/Timuchin3
+  description: Это topic_service с использованием свагера
+  termsOfService: тут были-бы условия использования, еслибы я их мог обозначить
+  title: User API
+  version: 1.0.0
+paths:
+  /api/message/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: id сообщения
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: удаление сообщения
+      tags:
+      - Message
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: id топика
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.RespMessage'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: получение все сообщений в топике
+      tags:
+      - Message
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: id топика
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: файлы
+        in: formData
+        name: file
+        type: file
+      - in: query
+        name: message
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Message'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: редактирование/изменение сообщения
+      tags:
+      - Message
+  /api/message/rating/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: id сообщения
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: true/false лайк или диз лайк
+        in: query
+        name: like
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: оценка изменена
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: оставляем оценку к сообщению
+      tags:
+      - Message
+  /api/message/topic/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: id топика
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: количество элементов
+        in: query
+        name: limit
+        required: true
+        type: string
+      - description: страница
+        in: query
+        name: page
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.RespMessage'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: показывает рейтинг сообщений по лайкам в конкретном топике
+      tags:
+      - Message
+  /api/topic:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - in: query
+        name: info
+        type: string
+      - in: query
+        name: name
+        type: string
+      - description: лого топика
+        in: formData
+        name: file
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: топик успешно создан
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: получение сообщений в конкретном топике
+      tags:
+      - Topic
+  /api/topic/{id}:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: id топика
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: топик удален
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: получение сообщений в конкретном топике
+      tags:
+      - Topic
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: id топика
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.Topic'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: получение информации о конкретном топике
+      tags:
+      - Topic
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: id топика
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: логотип
+        in: formData
+        name: file
+        type: file
+      - in: query
+        name: info
+        type: string
+      - in: query
+        name: name
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: топик упешно обновлен
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: обновление топика
+      tags:
+      - Topic
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: id топика
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: вы присоединились к тоопику
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: вступление в топик
+      tags:
+      - Topic
+  /api/topic/rating:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: количество элементов на странице
+        in: query
+        name: limit
+        required: true
+        type: string
+      - description: страинца
+        in: query
+        name: page
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.TopicRating'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: отображает рейтин топиков по количеству пользователей
+      tags:
+      - Topic
+  /api/topic/user:
+    delete:
+      consumes:
+      - application/json
+      parameters:
+      - description: id топика
+        in: query
+        name: topic_id
+        required: true
+        type: string
+      - description: id пользователя
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: поьзователь удален из тоопика
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      security:
+      - ApiKeyAuth: []
+      summary: получение сообщений в конкретном топике
+      tags:
+      - Topic
+  /api/user/login:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: логин и пароль
+        in: body
+        name: ввод
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: вы успешно авторезировались
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: авторизация пользователия через сторонний сервис
+      tags:
+      - User
+  /api/user/register:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: логин и пароль
+        in: body
+        name: ввод
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: успешно зарегестрировались
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/models.Error'
+      summary: регистрация пользователия через сторонний сервис
+      tags:
+      - User
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

@@ -3,18 +3,20 @@ package tools
 import (
 	"encoding/json"
 	"github.com/gin-gonic/gin"
-	"service_topic/internal/models"
+	log "github.com/sirupsen/logrus"
+	"strings"
 )
 
-func MultipartFormTopic(c *gin.Context, topic *models.Topic) (Claims, string, error) {
-	var pathToFile string
+func MultipartForm(c *gin.Context, obj interface{}, dirName string) (Claims, string, error) {
+	var pathToFile []string
 	dataString := c.Request.FormValue("data")
 	data := []byte(dataString)
 
 	claims, err := ParseTokenClaims(c)
 
-	err = json.Unmarshal(data, &topic)
+	err = json.Unmarshal(data, &obj)
 	if err != nil {
+		log.WithField("component", "tools").Debug(err)
 		return Claims{}, "", err
 	}
 
@@ -22,15 +24,18 @@ func MultipartFormTopic(c *gin.Context, topic *models.Topic) (Claims, string, er
 
 		file, err2 := fileHeader.Open()
 		if err2 != nil {
+			log.WithField("component", "tools").Debug(err2)
 			return Claims{}, "", err
 		}
 
-		path, err2 := MakeDir(file, "topic", fileHeader.Filename)
+		path, err2 := MakeDirAndFile(file, dirName, fileHeader.Filename)
 		if err2 != nil {
 			return Claims{}, "", err2
 		}
-		pathToFile = path
+		pathToFile = append(pathToFile, path)
 	}
 
-	return claims, pathToFile, nil
+	path := strings.Join(pathToFile, "(space)")
+
+	return claims, path, nil
 }
