@@ -20,6 +20,7 @@ func ParseTokenClaims(c *gin.Context) (Claims, error) {
 	claims := Claims{}
 
 	strToken := c.Request.Header.Get("Authorization")
+
 	token, err := jwt.ParseWithClaims(strToken, &claims, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("не подходящий алгоритм шифрования: %v", t.Header["alg"])

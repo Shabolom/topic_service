@@ -33,10 +33,6 @@ func InitPgSQL() error {
 
 	sqlBuilder := squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar)
 
-	if err != nil {
-		return err
-	}
-
 	Pool = pool
 	Sq = sqlBuilder
 

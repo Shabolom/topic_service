@@ -1,6 +1,6 @@
 package models
 
 type Topic struct {
-	Name string
-	Info string
+	Name string `json:"name"`
+	Info string `json:"info"`
 }

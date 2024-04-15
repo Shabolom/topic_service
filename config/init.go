@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"github.com/joho/godotenv"
 	"os"
 	"strconv"
@@ -19,7 +20,6 @@ type env struct {
 	LocalApi        string
 	ConnectionApi   string
 	ConnectionLogin string
-	ConnectionGet   string
 	Production      bool
 	SecretKey       string
 }
@@ -40,7 +40,6 @@ func CheckFlagEnv() {
 	var localApi string
 	var connectionApi string
 	var connectionLogin string
-	var connectionGet string
 	var production bool
 	var secretKey string
 
@@ -48,7 +47,7 @@ func CheckFlagEnv() {
 	err := godotenv.Load()
 
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
 	}
 
 	var flagHost = flag.String("h", "", "host")
@@ -123,12 +122,6 @@ func CheckFlagEnv() {
 		connectionLogin = ""
 	}
 
-	if os.Getenv("CONNECTION_API_GET") != "" {
-		connectionGet = os.Getenv("CONNECTION_API_GET")
-	} else {
-		connectionGet = ""
-	}
-
 	if os.Getenv("PRODUCTION") != "" {
 		production, _ = strconv.ParseBool(os.Getenv("PRODUCTION"))
 	} else {
@@ -188,7 +181,6 @@ func CheckFlagEnv() {
 		LocalApi:        localApi,
 		ConnectionApi:   connectionApi,
 		ConnectionLogin: connectionLogin,
-		ConnectionGet:   connectionGet,
 		Production:      production,
 		SecretKey:       secretKey,
 	}

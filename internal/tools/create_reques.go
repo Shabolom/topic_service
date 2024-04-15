@@ -17,7 +17,11 @@ func CreateRequest(c *gin.Context, method string, path string) (*http.Response, 
 		return &http.Response{}, err
 	}
 
-	c.Writer.Header().Set("Authorization", response.Header.Get("Authorization"))
+	if response.Header.Get("Authorization") != "" {
+		c.Writer.Header().Set("Authorization", response.Header.Get("Authorization"))
+	} else {
+		c.Writer.Header().Set("Authorization", "")
+	}
 
 	return response, nil
 }

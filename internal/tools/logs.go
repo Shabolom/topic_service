@@ -3,25 +3,15 @@ package tools
 import (
 	nested "github.com/antonfisher/nested-logrus-formatter"
 	"os"
+	"runtime"
 	"service_topic/config"
 
 	log "github.com/sirupsen/logrus"
 )
 
+var INFO *log.Logger
+
 func InitLogger() error {
-
-	// можно выбрать только один режим среди O_RDONLY, O_WRONLY и O_RDWR
-	//O_RDONLY int = syscall.O_RDONLY // открыть файл в режиме чтения
-	//O_WRONLY int = syscall.O_WRONLY // открыть файл в режиме записи
-	//O_RDWR   int = syscall.O_RDWR   // открыть файл в режиме чтения и записи
-
-	// значения для управления поведением файла
-	//O_APPEND int = syscall.O_APPEND // добавлять новые данные в файл при записи
-	//O_CREATE int = syscall.O_CREAT  // создать новый файл, если файла не существует
-	//O_EXCL   int = syscall.O_EXCL   // используется вместе с O_CREATE и возвращает
-	// ошибку, если файл уже существует
-	//O_SYNC  int = syscall.O_SYNC  // открыть в режиме синхронного ввода/вывода
-	//O_TRUNC int = syscall.O_TRUNC // очистить файл при открытии
 
 	logsFile, err := os.OpenFile("info.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 
@@ -50,5 +40,23 @@ func InitLogger() error {
 			FieldsOrder:   []string{"component", "category"},
 		})
 	}
+
 	return nil
+}
+
+func InfoLogs() {
+	infoLog := log.New()
+
+	infoLog.SetLevel(log.DebugLevel)
+	infoLog.SetOutput(os.Stdout)
+	infoLog.SetFormatter(&nested.Formatter{
+		ShowFullLevel: true,
+		HideKeys:      true,
+		FieldsOrder:   []string{"component", "middleware"},
+		CustomCallerFormatter: func(frame *runtime.Frame) string {
+			return ""
+		},
+	})
+
+	INFO = infoLog
 }

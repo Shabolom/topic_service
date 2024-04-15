@@ -1,0 +1,48 @@
+version: '2.4'
+services:
+  postgres:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: service_topic_docker
+      POSTGRES_PASSWORD: service_topic_docker
+      POSTGRES_DB: service_topic_docker
+    healthcheck:
+      test: pg_isready -U service_topic_docker
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "6432:5432"
+    networks:
+      service_topic_docker:
+        aliases:
+          - postgres
+  service_topic_docker:
+    hostname: "localhost"
+    ports:
+      - "8800:8800"
+    environment:
+      HOST: "localhost"
+      PORT: "8800"
+      DB_HOST: "postgres"
+      DB_PORT: "5432"
+      DB_USER: "service_topic_docker"
+      DB_PASSWORD: "service_topic_docker"
+      DB_NAME: "service_topic_docker"
+      LOCAL_API: "http://localhost:8800/"
+      CONNECTION_API_AUT: "http://localhost:8000/api/users/register"
+      CONNECTION_API_LOGIN: "http://localhost:8000/api/users/login"
+      PRODUCTION: false
+    build:
+      context: ../../
+      dockerfile: build/app/Dockerfile
+    depends_on:
+      - postgres
+    networks:
+      service_topic_docker:
+        aliases:
+          - service_topic_docker
+networks:
+  service_topic_docker:
+    driver: bridge

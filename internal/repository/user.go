@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"service_topic/config"
 	"service_topic/internal/domain"
+	"time"
 )
 
 type UserRepo struct {
@@ -17,8 +18,8 @@ func NewUserRepo() *UserRepo {
 func (ur *UserRepo) Register(user domain.User) error {
 	sql, args, err := config.Sq.
 		Insert("users").
-		Columns("id", "when_created", "user_name").
-		Values(user.ID, user.WhenCreated, user.UserName).
+		Columns("id", "when_created", "when_update", "user_name").
+		Values(user.ID, user.WhenCreated, time.Now(), user.UserName).
 		ToSql()
 	if err != nil {
 		return err
