@@ -21,6 +21,7 @@ func SetupRouter() *gin.Engine {
 
 	r.POST("/api/user/register", user.Register)
 	r.POST("/api/user/login", user.Login)
+	r.GET("/api/message/:id", message.Get)
 
 	r.GET("/docs/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -35,7 +36,6 @@ func SetupRouter() *gin.Engine {
 		Auth.GET("/api/topic/rating", topic.TopicRating)
 
 		Auth.POST("/api/message/:id", message.Post)
-		Auth.GET("/api/message/:id", message.Get)
 		Auth.PATCH("/api/message/:id", message.Update)
 		Auth.DELETE("/api/message/:id", message.Delete)
 		Auth.GET("/api/message/rating/:id", message.Rating)

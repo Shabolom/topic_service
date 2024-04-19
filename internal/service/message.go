@@ -64,7 +64,6 @@ func (ms *MessageService) Update(strMessageID, filePath, message string) (domain
 		return domain.Message{}, err
 	}
 
-
 	messageEntity := domain.Message{
 		ID:           messageID,
 		WhenUpdated:  time.Now(),
@@ -80,14 +79,19 @@ func (ms *MessageService) Update(strMessageID, filePath, message string) (domain
 	return result, nil
 }
 
-func (ms *MessageService) Get(strTopicID string) ([]models.RespMessage, error) {
+func (ms *MessageService) Get(strTopicID string, userID uuid.UUID, limit, skip uint64) ([]models.RespMessage, error) {
 	topicID, err := uuid.FromString(strTopicID)
 	if err != nil {
 		log.WithField("component", "service").Debug(err)
 		return []models.RespMessage{}, err
 	}
 
-	result, err := messageRepo.Get(topicID)
+	//err = messageRepo.CheckSubscribe(userID, topicID)
+	//if err != nil {
+	//	return []models.RespMessage{}, errors.New("вы не являетесь участником этого топика")
+	//}
+
+	result, err := messageRepo.Get(topicID, limit, skip)
 	if err != nil {
 		return []models.RespMessage{}, err
 	}

@@ -1,11 +1,14 @@
 package main
 
 import (
+	"github.com/go-co-op/gocron/v2"
 	log "github.com/sirupsen/logrus"
 	"service_topic/config"
 	_ "service_topic/docs"
+	"service_topic/internal/repository"
 	"service_topic/internal/routes"
 	"service_topic/internal/tools"
+	"time"
 )
 
 func main() {
@@ -36,6 +39,20 @@ func main() {
 
 	r := routes.SetupRouter()
 	tools.INFO.WithField("cmd", "initialization").Info("ручки управления api получены")
+
+	// запускаем горутину с обновлением хэша
+	// инициализируем объект планировщика
+	s, err := gocron.NewScheduler()
+	if err != nil {
+		log.WithField("component", "run").Debug(err)
+	}
+	// добавляем одну задачу на каждую минуту
+	j, err := s.NewJob(gocron.DurationJob(1*time.Minute), gocron.NewTask(repository.HashComments))
+	if err != nil {
+		log.WithField("component", "run").Debug(err)
+	}
+	tools.INFO.WithField("cmd", "initialization").Info("id задачи созданной в фоновом режиме :", j.ID())
+	s.Start()
 
 	// запуск сервера
 	tools.INFO.WithField("cmd", "initialization").Info("запуск сервера")

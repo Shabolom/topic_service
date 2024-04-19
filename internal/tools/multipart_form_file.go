@@ -2,6 +2,7 @@ package tools
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"strings"
@@ -15,7 +16,9 @@ func MultipartForm(c *gin.Context, obj interface{}, dirName string) (Claims, str
 	claims, err := ParseTokenClaims(c)
 
 	err = json.Unmarshal(data, &obj)
+
 	if err != nil {
+		fmt.Println(dataString)
 		log.WithField("component", "tools").Debug(err)
 		return Claims{}, "", err
 	}
