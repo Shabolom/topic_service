@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"github.com/gofrs/uuid"
 	log "github.com/sirupsen/logrus"
 	"service_topic/config"
@@ -12,6 +13,8 @@ import (
 	"time"
 )
 
+var CommentsHash = map[uuid.UUID][]models.RespMessage{}
+
 type MessageRepo struct {
 }
 
@@ -20,6 +23,7 @@ func NewMessageRepo() *MessageRepo {
 }
 
 func (mr *MessageRepo) Post(message domain.Message) (domain.Message, error) {
+
 	sql, args, err := config.Sq.
 		Insert("comments").
 		Columns("id", "when_crated", "when_update", "user_massage", "user_file_path", "user_id", "topic_id").
@@ -74,24 +78,124 @@ func (mr *MessageRepo) Update(message domain.Message) (domain.Message, error) {
 	return message, nil
 }
 
-func (mr *MessageRepo) Get(topicID uuid.UUID) ([]models.RespMessage, error) {
+//func (mr *MessageRepo) Get(topicID uuid.UUID, limit, skip uint64) ([]models.RespMessage, error) {
+//	var message models.RespMessage
+//	var messages []models.RespMessage
+//	var pathFile string
+//
+//	commentsID, err := mr.SelectCommentsID(topicID)
+//	if err != nil {
+//		return []models.RespMessage{}, err
+//	}
+//
+//	for _, commentID := range commentsID {
+//		err = mr.UpdateLikeDizLikeCount(commentID)
+//		if err != nil {
+//			return []models.RespMessage{}, err
+//		}
+//	}
+//
+//	sql, args, err := config.Sq.
+//		Select(
+//			"u.id",
+//			"c.id",
+//			"u.user_name",
+//			"c.user_massage",
+//			"c.when_crated",
+//			"c.when_update",
+//			"c.user_file_path",
+//			"ld.likes",
+//			"ld.diz_likes").
+//		From("users u").
+//		Join("comments c ON u.id = c.user_id").
+//		Where("c.topic_id = $1 AND c.when_deleted IS NULL", topicID).
+//		Join("like_dizlike_count ld ON c.id = ld.comment_id").
+//		GroupBy("u.id", "c.id", "ld.likes", "ld.diz_likes").
+//		OrderBy("c.when_crated ASC").
+//		Offset(skip).
+//		Limit(limit).
+//		ToSql()
+//	if err != nil {
+//		log.WithField("component", "repo").Debug(err)
+//		return []models.RespMessage{}, err
+//	}
+//
+//	rows, err := config.Pool.Query(context.TODO(), sql, args...)
+//	if err != nil {
+//		log.WithField("component", "repo").Debug(err)
+//		return []models.RespMessage{}, err
+//	}
+//
+//	fmt.Println(sql, args)
+//	for rows.Next() {
+//
+//		err2 := rows.Scan(
+//			&message.UserID,
+//			&message.MessageID,
+//			&message.UserLogin,
+//			&message.Message,
+//			&message.WhenCreated,
+//			&message.WhenUpdate,
+//			&pathFile,
+//			&message.Like,
+//			&message.DizLike,
+//		)
+//
+//		if err2 != nil {
+//			log.WithField("component", "repo").Debug(err2)
+//			return []models.RespMessage{}, err
+//		}
+//
+//		message.PathToFiles = strings.Split(pathFile, "(space)")
+//
+//		messages = append(messages, message)
+//	}
+
+//	return messages, nil
+//}
+
+func (mr *MessageRepo) Get(topicID uuid.UUID, limit, skip uint64) ([]models.RespMessage, error) {
 	var message models.RespMessage
 	var messages []models.RespMessage
 	var pathFile string
+	var id uuid.UUID
+	var ids []uuid.UUID
 
-	commentsID, err := mr.SelectCommentsID(topicID)
+	sql, args, err := config.Sq.
+		Select("id").
+		From("comments c").
+		Where("c.topic_id = $1 AND c.when_deleted IS NULL", topicID).
+		GroupBy("c.id").
+		OrderBy("c.when_crated ASC").
+		Offset(skip).
+		Limit(limit).
+		ToSql()
 	if err != nil {
+		log.WithField("component", "repo").Debug(err)
 		return []models.RespMessage{}, err
 	}
 
-	for _, commentID := range commentsID {
-		err = mr.UpdateLikeDizLikeCount(commentID)
-		if err != nil {
-			return []models.RespMessage{}, err
-		}
+	rows, err := config.Pool.Query(context.TODO(), sql, args...)
+	if err != nil {
+		log.WithField("component", "repo").Debug(err)
+		return []models.RespMessage{}, err
 	}
 
-	sql, args, err := config.Sq.
+	for rows.Next() {
+
+		err2 := rows.Scan(
+			&id,
+		)
+
+		if err2 != nil {
+			log.WithField("component", "repo").Debug(err2)
+			return []models.RespMessage{}, err
+		}
+
+		ids = append(ids, id)
+	}
+
+	sql, args, err = config.Sq.
 		Select(
 			"u.id",
 			"c.id",
@@ -104,22 +208,28 @@ func (mr *MessageRepo) Get(topicID uuid.UUID) ([]models.RespMessage, error) {
 			"ld.diz_likes").
 		From("users u").
 		Join("comments c ON u.id = c.user_id").
-		Where("c.topic_id = $1 AND c.when_deleted IS NULL", topicID).
+		Where("c.id = ANY ($1) AND c.when_deleted IS NULL", ids).
 		Join("like_dizlike_count ld ON c.id = ld.comment_id").
 		GroupBy("u.id", "c.id", "ld.likes", "ld.diz_likes").
 		OrderBy("c.when_crated ASC").
+		Offset(skip).
+		Limit(limit).
 		ToSql()
 	if err != nil {
 		log.WithField("component", "repo").Debug(err)
 		return []models.RespMessage{}, err
 	}
 
-	rows, err := config.Pool.Query(context.TODO(), sql, args...)
+	rows, err = config.Pool.Query(context.TODO(), sql, args...)
 	if err != nil {
 		log.WithField("component", "repo").Debug(err)
 		return []models.RespMessage{}, err
 	}
+
 	for rows.Next() {
+
+		fmt.Println(sql, args)
+
 		err2 := rows.Scan(
 			&message.UserID,
 			&message.MessageID,
@@ -129,10 +239,12 @@ func (mr *MessageRepo) Get(topicID uuid.UUID) ([]models.RespMessage, error) {
 			&message.WhenUpdate,
 			&pathFile,
 			&message.Like,
-			&message.DizLike)
+			&message.DizLike,
+		)
+
 		if err2 != nil {
 			log.WithField("component", "repo").Debug(err2)
-			return []models.RespMessage{}, err2
+			return []models.RespMessage{}, err
 		}
 
 		message.PathToFiles = strings.Split(pathFile, "(space)")
@@ -473,4 +585,70 @@ func (mr *MessageRepo) SelectCommentsID(topicID uuid.UUID) ([]uuid.UUID, error) 
 	}
 
 	return messagesID, nil
+}
+
+func HashComments() {
+	var messages []models.RespMessage
+	var message models.RespMessage
+	var pathFile string
+	var topicID uuid.UUID
+
+	clear(CommentsHash)
+
+	sql, args, err := config.Sq.
+		Select(
+			"u.id",
+			"c.id",
+			"u.user_name",
+			"c.user_massage",
+			"c.when_crated",
+			"c.when_update",
+			"c.user_file_path",
+			"ld.likes",
+			"ld.diz_likes",
+			"c.topic_id",
+		).
+		From("users u").
+		Join("comments c ON u.id = c.user_id").
+		Where("c.when_deleted IS NULL").
+		Join("like_dizlike_count ld ON c.id = ld.comment_id").
+		GroupBy("u.id", "c.id", "ld.likes", "ld.diz_likes", "c.topic_id").
+		OrderBy("c.when_crated ASC").
+		ToSql()
+	if err != nil {
+		log.WithField("component", "repo-cron").Debug(err)
+	}
+
+	rows, err := config.Pool.Query(context.TODO(), sql, args...)
+	if err != nil {
+		log.WithField("component", "repo-cron").Debug(err)
+	}
+
+	for rows.Next() {
+
+		err2 := rows.Scan(
+			&message.UserID,
+			&message.MessageID,
+			&message.UserLogin,
+			&message.Message,
+			&message.WhenCreated,
+			&message.WhenUpdate,
+			&pathFile,
+			&message.Like,
+			&message.DizLike,
+			&topicID,
+		)
+
+		if err2 != nil {
+			log.WithField("component", "repo-cron").Debug(err2)
+		}
+
+		message.PathToFiles = strings.Split(pathFile, "(space)")
+
+		messages = append(messages, message)
+
+		CommentsHash[topicID] = append(CommentsHash[topicID], message)
+	}
+
+	tools.INFO.WithField("component", "repo-cron").Info("хэш по топикам обновлен")
 }

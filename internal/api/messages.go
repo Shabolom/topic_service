@@ -111,7 +111,19 @@ func (ma MessagesApi) Update(c *gin.Context) {
 func (ma MessagesApi) Get(c *gin.Context) {
 	topicID := c.Param("id")
 
-	result, err := messagesService.Get(topicID)
+	//claims, err := tools.ParseTokenClaims(c)
+	//if err != nil {
+	//	tools.CreateError(http.StatusBadRequest, err, c)
+	//	return
+	//}
+
+	limit, skip, err := tools.Pagination(c)
+	if err != nil {
+		tools.CreateError(http.StatusBadRequest, err, c)
+		return
+	}
+
+	result, err := messagesService.Get(topicID, uuid.Nil, limit, skip)
 	if err != nil {
 		tools.CreateError(http.StatusBadRequest, err, c)
 		return

@@ -35,6 +35,16 @@ var topicService = service.NewTopicService()
 func (ta *TopicApi) Create(c *gin.Context) {
 	var topic models.Topic
 
+	claims, err := tools.ParseTokenClaims(c)
+	if err != nil {
+		tools.CreateError(http.StatusBadRequest, err, c)
+		return
+	}
+	if claims.UserPerm != 3 {
+		tools.CreateError(http.StatusBadRequest, errors.New("у вас недостаточно прав"), c)
+		return
+	}
+
 	_, pathToLogo, err := tools.MultipartForm(c, &topic, "topic")
 	if err != nil {
 		tools.CreateError(http.StatusBadRequest, err, c)
